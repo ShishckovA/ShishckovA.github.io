@@ -2,7 +2,7 @@ name: Deploy Next.js site to Pages
 
 on:
   push:
-    branches: ["master"]  # Изменено с main на master
+    branches: ["master"]
   workflow_dispatch:
 
 permissions:
@@ -25,13 +25,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          # Убираем cache: 'npm' так как нет package-lock.json
           
       - name: Setup Pages
         uses: actions/configure-pages@v4
         
       - name: Install dependencies
-        run: npm install  # Изменено с npm ci на npm install
+        run: npm install --legacy-peer-deps  # Добавляем флаг для игнорирования конфликтов
         
       - name: Build with Next.js
         run: npm run build
