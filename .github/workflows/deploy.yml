@@ -1,18 +1,15 @@
-name: Deploy Next.js site to GitHub Pages
+name: Deploy Next.js site to Pages
 
 on:
   push:
-    branches: ["main"] # Или ваша основная ветка (например, master)
-  workflow_dispatch: # Позволяет запускать вручную
+    branches: ["main"]
+  workflow_dispatch:
 
-# Устанавливает разрешения для GITHUB_TOKEN для развертывания на GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Разрешает только одно одновременное развертывание, пропуская запуски, поставленные в очередь между текущим и последним.
-# Однако НЕ отменяйте текущие запуски, так как мы хотим, чтобы эти производственные развертывания завершились.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -23,55 +20,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Detect Package Manager
-        id: detect-package-manager
-        run: |
-          if [ -f "${{ github.workspace }}/yarn.lock" ]; then
-            echo "manager=yarn" >> $GITHUB_OUTPUT
-            echo "command=install" >> $GITHUB_OUTPUT
-            echo "runner=yarn" >> $GITHUB_OUTPUT
-            exit 0
-          elif [ -f "${{ github.workspace }}/package-lock.json" ]; then
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "Unable to detect package manager"
-            exit 1
-          fi
-      - name: Setup Node
+        
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: ${{ steps.detect-package-manager.outputs.manager }}
+          node-version: '18'
+          cache: 'npm'
+          
       - name: Setup Pages
-        uses: actions/configure-pages@v5
-        # Если вы используете basePath, раскомментируйте и настройте:
-        # with:
-        #   static_site_generator_options: |
-        #     # For example, if your basePath is /my-repo
-        #     build_command: ${{ steps.detect-package-manager.outputs.runner }} next build
-        #     output_path: out
-            
-      - name: Restore cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
+        uses: actions/configure-pages@v4
+        
       - name: Install dependencies
-        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
+        run: npm ci
+        
       - name: Build with Next.js
-        # Если вы используете basePath, убедитесь, что он установлен как переменная окружения
-        # или Next.js сможет его подхватить из actions/configure-pages
-        run: ${{ steps.detect-package-manager.outputs.manager }} run build # Выполняет 'next build'
+        run: npm run build
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./out # Next.js экспортирует статические файлы в папку 'out'
+          path: ./out
 
   deploy:
     environment:
